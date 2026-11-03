@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Rubik học giải</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rubik">
+<meta name="theme-color" content="#0f131a">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <h1>Rubik học giải</h1>
+    <button id="btnTheme" class="icon" type="button" aria-label="Đổi sáng/tối">🌓</button>
+  </header>
+
+  <section class="stage" aria-label="Khối Rubik 3D">
+    <div id="view" class="view"></div>
+    <div class="viewbtns">
+      <button id="btnFront" type="button">Mặt trước</button>
+      <button id="btnBottom" type="button">Xem mặt dưới</button>
+    </div>
+    <p class="hint">Kéo để xoay khối. Tư thế chuẩn: <b>tâm trắng ở dưới</b>, <b>xanh lá ở trước</b>.</p>
+  </section>
+
+  <section class="card" aria-label="Tô màu">
+    <h2>Tô màu từng ô</h2>
+    <div id="palette" class="palette" role="radiogroup" aria-label="Chọn màu"></div>
+    <p class="hint small">Chọn một màu rồi chạm ô trên khối hoặc trên hình trải ra. Ô tâm không đổi được. Chọn “Chỉ xem” để không tô nhầm.</p>
+    <div id="net" class="net" aria-label="Hình trải ra của khối"></div>
+  </section>
+
+  <section class="card" aria-label="Quay khối">
+    <h2>Quay khối</h2>
+    <div id="moves" class="moves"></div>
+    <div class="row">
+      <button id="btnUndo" type="button">↶ Quay lại</button>
+      <button id="btnScramble" type="button">🔀 Đảo ngẫu nhiên</button>
+      <button id="btnSolved" type="button">⟲ Khối nguyên</button>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Kiểm tra">
+    <button id="btnCheck" class="primary" type="button">✔ Kiểm tra khối có thật không</button>
+    <div id="result" class="result" role="status" aria-live="polite"></div>
+  </section>
+
+  <p class="foot">Giai đoạn 1 · dữ liệu chỉ lưu trong máy này</p>
+</main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="lib/three.min.js"></script>
+<script src="cube.js"></script>
+<script src="view3d.js"></script>
+<script src="app.js"></script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});</script>
+</body>
+</html>
