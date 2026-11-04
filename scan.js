@@ -39,6 +39,15 @@
     for (var i = 0; i < data.length; i += 4) { r.push(data[i]); g.push(data[i + 1]); b.push(data[i + 2]); }
     return [median(r), median(g), median(b)];
   }
+  // màu của một ô: lấy trung vị ở VÀNH quanh ô (bỏ phần giữa) để ký tự/logo in giữa ô không làm lệch màu
+  function ringRGB(ctx, x, y, n) {
+    var d = ctx.getImageData(x, y, n, n).data, q = Math.floor(n * 0.3), keep = [];
+    for (var j = 0; j < n; j++) for (var i = 0; i < n; i++) {
+      if (i >= q && i < n - q && j >= q && j < n - q) continue;
+      var k = (j * n + i) * 4; keep.push(d[k], d[k + 1], d[k + 2], 255);
+    }
+    return medianRGB(keep);
+  }
   // 9 ô từ khung video: vuông giữa, lưới chiếm 78%
   function sampleVideo(v) {
     var vw = v.videoWidth, vh = v.videoHeight;
@@ -49,7 +58,7 @@
     ctx.drawImage(v, x0, y0, side, side, 0, 0, 150, 150);
     var out = [];
     for (var r = 0; r < 3; r++) for (var c = 0; c < 3; c++) {
-      out.push(medianRGB(ctx.getImageData(c * 50 + 16, r * 50 + 16, 18, 18).data));
+      out.push(ringRGB(ctx, c * 50 + 11, r * 50 + 11, 28));
     }
     return out;
   }
@@ -80,10 +89,11 @@
   function renderStep() {
     var f = ORDER[S.step];
     renderDots(); renderDone();
-    $('sTitle').textContent = S.odd ? 'Mặt ' + (S.step + 1) + '/6 (khối màu lạ)' : 'Mặt ' + (S.step + 1) + '/6 · tâm ' + NAMES[f].toUpperCase();
+    $('sTitle').textContent = S.odd ? 'Mặt ' + (S.step + 1) + '/6 (' + (S.free ? 'chỉ chụp, tự sửa' : 'khối màu lạ') + ')' : 'Mặt ' + (S.step + 1) + '/6 · tâm ' + NAMES[f].toUpperCase();
     $('sText').textContent = S.odd ? STEPS_ODD[f] : STEPS[f].text;
-    $('sOdd').textContent = S.odd ? '🎨 Khối màu lạ: BẬT (bấm “Chụp ngay” cho từng mặt)' : '🎨 Khối màu lạ: tắt';
-    $('sOdd').disabled = S.step > 0;
+    $('sOdd').textContent = S.odd && !S.free ? '🎨 Khối màu lạ: BẬT (bấm “Chụp ngay” cho từng mặt)' : '🎨 Khối màu lạ: tắt';
+    $('sFree').textContent = S.free ? '✋ Chỉ chụp, tôi tự sửa: BẬT (bấm “Chụp ngay” cho từng mặt)' : '✋ Chỉ chụp, tôi tự sửa: tắt';
+    $('sOdd').disabled = S.step > 0; $('sFree').disabled = S.step > 0;
     $('sBar').style.width = '0%';
     $('sRedo').disabled = S.step === 0;
     S.hist = []; S.cool = performance.now() + 900;
@@ -105,7 +115,7 @@
   function capture(rgb9) {
     if (!S) return;
     var f = ORDER[S.step];
-    if (S.odd) {
+    if (S.odd && !S.free) {
       var lc = V.rgbToLab(rgb9[4]), dup = false;
       ORDER.forEach(function (g) { if (S.samples[g] && V.dist(lc, V.rgbToLab(S.samples[g][4])) < 14) dup = true; });
       if (dup) { status('Tâm mặt này gần giống màu tâm một mặt đã quét. Hãy đưa mặt khác vào khung (hoặc bấm “Chụp lại mặt trước”).'); return; }
@@ -121,7 +131,7 @@
   function finish() {
     var samples = S.samples;
     var res = V.readCube(samples);
-    var odd = !!S.odd, real = null;
+    var odd = !!S.odd && !S.free, free = !!S.free, real = null;
     if (odd) { real = {}; C.FACES.forEach(function (f) { real[f] = samples[f][4].map(Math.round); }); }
     stopScan(true);
     A.setRealColors(real);
@@ -131,7 +141,7 @@
     var note = res.notes.indexOf('rot') >= 0 ? ' App đã tự xoay lại một số mặt cho khớp.' : '';
     if (res.notes.indexOf('swap') >= 0) note += ' App đã đổi chỗ hai ô nghi ngờ cho khớp.';
     if (res.valid) {
-      A.toast((odd ? 'Khối màu lạ: xem bảng đổi màu (chấm màu thật = màu trong app). ' : '') + 'Đã đọc xong 6 mặt.' + note + (res.low.length ? ' Ô viền cam là ô chưa chắc: so với khối thật rồi chạm để sửa.' : ' So với khối thật rồi bấm “Hướng dẫn giải”.'));
+      A.toast((odd ? 'Khối màu lạ: xem bảng đổi màu (chấm màu thật = màu trong app). ' : free ? 'Chỉ chụp: hãy tự sửa màu cho giống khối thật. ' : '') + 'Đã đọc xong 6 mặt.' + note + (res.low.length ? ' Ô viền cam là ô chưa chắc: so với khối thật rồi chạm để sửa.' : ' So với khối thật rồi bấm “Hướng dẫn giải”.'));
     } else {
       A.toast('Đọc xong nhưng khối chưa hợp lệ.' + note + ' Xem chỗ báo lỗi bên dưới và chạm ô để sửa.');
       $('btnCheck').click();
@@ -146,6 +156,7 @@
     var cells = sampleVideo(v);
     if (!cells) return;
     var f = ORDER[S.step], now = performance.now();
+    if (S.free) { status('Chỉ chụp: đưa mặt vào khung rồi bấm “📸 Chụp ngay”. Quét xong Thầy tự sửa màu.'); $('sBar').style.width = '0%'; return; }
     if (S.odd) { status('Khối màu lạ: đưa mặt vào khung rồi bấm “📸 Chụp ngay”.'); $('sBar').style.width = '0%'; return; }
     var nom = V.nominal(cells[4]);
     if (now < S.cool) { $('sBar').style.width = '0%'; return; }
@@ -190,7 +201,7 @@
   }
 
   async function startScan() {
-    S = { step: 0, samples: {}, stream: null, timer: null, hist: [], cool: 0, photo: null, odd: false };
+    S = { step: 0, samples: {}, stream: null, timer: null, hist: [], cool: 0, photo: null, odd: false, free: false };
     A.setMode('scan');
     renderStep();
     status('Đang mở camera…');
@@ -263,12 +274,12 @@
     var cv = $('sPhoto'), ctx = cv.getContext('2d', { willReadFrequently: true });
     var a = photoQ[0], b = photoQ[1], c = photoQ[2], d = photoQ[3];
     function pt(u, v) { return { x: (1 - v) * ((1 - u) * a.x + u * b.x) + v * ((1 - u) * d.x + u * c.x), y: (1 - v) * ((1 - u) * a.y + u * b.y) + v * ((1 - u) * d.y + u * c.y) }; }
-    var side = (Math.hypot(b.x - a.x, b.y - a.y) + Math.hypot(d.x - a.x, d.y - a.y)) / 2, r = Math.max(3, side / 3 * 0.18);
+    var side = (Math.hypot(b.x - a.x, b.y - a.y) + Math.hypot(d.x - a.x, d.y - a.y)) / 2, r = Math.max(3, side / 3 * 0.26);
     var out = [];
     for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) {
       var p = pt((j + 0.5) / 3, (i + 0.5) / 3);
       var x = Math.max(0, Math.min(cv.width - 2 * r, p.x - r)), y = Math.max(0, Math.min(cv.height - 2 * r, p.y - r));
-      out.push(medianRGB(ctx.getImageData(Math.round(x), Math.round(y), Math.round(2 * r), Math.round(2 * r)).data));
+      out.push(ringRGB(ctx, Math.round(x), Math.round(y), Math.max(5, Math.round(2 * r))));
     }
     return out;
   }
@@ -302,7 +313,8 @@
     S.step--; delete S.samples[ORDER[S.step]];
     renderStep(); status(S.odd ? 'Quét lại mặt ' + (S.step + 1) + '.' : 'Quét lại mặt tâm ' + NAMES[ORDER[S.step]] + '.');
   });
-  $('sOdd').addEventListener('click', function () { if (!S || S.step > 0) return; S.odd = !S.odd; renderStep(); status(S.odd ? 'Khối màu lạ: bật.' : 'Khối màu lạ: tắt.'); });
+  $('sFree').addEventListener('click', function () { if (!S || S.step > 0) return; S.free = !S.free; S.odd = S.free; renderStep(); status(S.free ? 'Chỉ chụp, tự sửa: bật.' : 'Đã tắt.'); });
+  $('sOdd').addEventListener('click', function () { if (!S || S.step > 0) return; S.free = false; S.odd = !S.odd; renderStep(); status(S.odd ? 'Khối màu lạ: bật.' : 'Khối màu lạ: tắt.'); });
   $('sPick').addEventListener('click', function () { $('sFile').value = ''; $('sFile').click(); });
   $('sFile').addEventListener('change', function () {
     var f = $('sFile').files && $('sFile').files[0];
