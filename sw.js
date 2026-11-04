@@ -1,5 +1,5 @@
 /* sw.js - lưu file app để chạy khi mất mạng. Đổi file nào thì tăng số CACHE. */
-var CACHE = 'rubik-v6';
+var CACHE = 'rubik-v9';
 var FILES = ['./', 'index.html', 'style.css', 'app.js', 'cube.js', 'solver.js', 'lessons.js', 'store.js', 'vision.js', 'learn.js', 'scan.js', 'view3d.js', 'lib/three.min.js',
   'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', function (e) {

@@ -131,15 +131,21 @@ body[data-mode="guide"] .view, body[data-mode="practice"] .view { aspect-ratio: 
 body[data-mode="guide"] #gGoal { display: none; }
 body[data-mode="guide"] .ctrl { position: sticky; bottom: 0; background: var(--card); padding: 8px 0 4px; z-index: 2; }
 body[data-mode="guide"] .bigmove .sym { font-size: 26px; min-width: 76px; }
-/* Màn rộng (máy tính, iPad nằm ngang): khối bên trái, hướng dẫn bên phải */
+/* Màn rộng (máy tính, iPad nằm ngang): khối bên trái và dính, các bảng bên phải; áp dụng cho tô màu, hướng dẫn, luyện tập */
 @media (min-width: 760px) {
-  body[data-mode="guide"] .app, body[data-mode="practice"] .app {
+  body:is([data-mode="guide"], [data-mode="practice"], [data-mode="edit"]) .app {
     max-width: 1000px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 20px; align-items: start;
   }
-  body[data-mode="guide"] .stage, body[data-mode="practice"] .stage { grid-column: 1; grid-row: 1 / span 8; top: 8px; }
-  body[data-mode="guide"] .card, body[data-mode="practice"] .card { grid-column: 2; margin-top: 0; margin-bottom: 14px; }
-  body[data-mode="guide"] .view, body[data-mode="practice"] .view { height: 70vh; }
-  body[data-mode="guide"] .foot, body[data-mode="practice"] .foot { grid-column: 2; }
+  body:is([data-mode="guide"], [data-mode="practice"], [data-mode="edit"]) .top { grid-column: 1 / -1; display: flex; }
+  body:is([data-mode="guide"], [data-mode="practice"]) .top { display: none; }
+  body:is([data-mode="guide"], [data-mode="practice"], [data-mode="edit"]) .stage {
+    grid-column: 1; grid-row: 2 / span 12; position: sticky; top: 8px; margin-top: 0;
+  }
+  body:is([data-mode="guide"], [data-mode="practice"]) .stage { grid-row: 1 / span 12; }
+  body:is([data-mode="guide"], [data-mode="practice"], [data-mode="edit"]) .card { grid-column: 2; margin-top: 0; margin-bottom: 14px; }
+  body:is([data-mode="guide"], [data-mode="practice"]) .view { height: 70vh; }
+  body[data-mode="edit"] .view { aspect-ratio: auto; height: 60vh; max-height: none; }
+  body:is([data-mode="guide"], [data-mode="practice"], [data-mode="edit"]) .foot { grid-column: 2; }
 }
 
 /* ===== giai đoạn 4: quét bằng camera ===== */
@@ -155,3 +161,11 @@ body[data-mode="guide"] .bigmove .sym { font-size: 26px; min-width: 76px; }
 .sdone .mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; width: 38px; height: 38px; border: 2px solid transparent; border-radius: 4px; }
 .sdone .mini.empty { opacity: .25; }
 .sdone .mini i { display: block; }
+
+/* khối nhiều màu lạ: bảng đổi màu giữa màu thật của khối và màu trong app */
+.realmap { margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: var(--btn); font-size: 15px; }
+.realmap b { display: block; margin-bottom: 6px; }
+.realmap ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+.realmap li { display: flex; align-items: center; gap: 6px; }
+.realmap .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(0,0,0,.4); flex: none; }
+.palette .sw .real { display: block; width: 14px; height: 14px; margin: 5px; border-radius: 50%; border: 2px solid rgba(255,255,255,.9); box-shadow: 0 0 0 1px rgba(0,0,0,.5); }

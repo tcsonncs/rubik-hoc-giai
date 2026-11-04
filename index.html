@@ -32,6 +32,7 @@
   <!-- ===== Hướng dẫn giải ===== -->
   <section id="cardGuide" class="card" aria-label="Hướng dẫn giải" data-modes="guide">
     <ol id="gProg" class="prog" aria-label="Các giai đoạn"></ol>
+    <div id="gRealMap" class="realmap" hidden></div>
     <h2 id="gStage"></h2>
     <p id="gGoal" class="hint small"></p>
     <div id="gMove" class="bigmove" aria-live="polite"></div>
@@ -105,6 +106,7 @@
       <button id="sPick" type="button">🖼 Chọn ảnh</button>
       <button id="sExit" type="button">✕ Thoát</button>
     </div>
+    <button id="sOdd" type="button" class="ghost">🎨 Khối màu lạ: tắt</button>
     <div id="sPhotoBtns" class="row2" hidden>
       <button id="sUse" class="primary" type="button">✔ Dùng ảnh này</button>
       <button id="sCancel" type="button">✕ Bỏ ảnh</button>
@@ -128,6 +130,7 @@
   <section class="card" aria-label="Tô màu" data-modes="edit">
     <h2>Tô màu từng ô</h2>
     <div id="palette" class="palette" role="radiogroup" aria-label="Chọn màu"></div>
+    <div id="realMap" class="realmap" hidden></div>
     <p class="hint small">Chọn một màu rồi chạm ô trên khối hoặc trên hình trải ra. Ô tâm không đổi được. Chọn “Chỉ xem” để không tô nhầm.</p>
     <div id="net" class="net" aria-label="Hình trải ra của khối"></div>
   </section>

@@ -84,6 +84,33 @@
   }
   buildPalette();
 
+  // ---- khối màu lạ: nhớ màu thật của 6 tâm để đổi sang màu trong app ----
+  var REALKEY = 'rubik-realcolors', realColors = null;
+  try { realColors = JSON.parse(localStorage.getItem(REALKEY) || 'null'); } catch (e) { realColors = null; }
+  function renderReal() {
+    Array.prototype.forEach.call($('palette').children, function (b) {
+      var sw = b.querySelector('.sw'); if (!sw) return;
+      var old = sw.querySelector('.real'); if (old) sw.removeChild(old);
+      var k = b.dataset.k;
+      if (realColors && k && realColors[k]) { var d = document.createElement('i'); d.className = 'real'; d.style.background = 'rgb(' + realColors[k].join(',') + ')'; sw.appendChild(d); }
+    });
+    ['realMap', 'gRealMap'].forEach(function (id) {
+      var box = $(id); if (!box) return;
+      box.innerHTML = '';
+      box.hidden = !realColors;
+      if (!realColors) return;
+      var b = document.createElement('b'); b.textContent = 'Khối màu lạ: chấm màu thật của khối = màu trong app'; box.appendChild(b);
+      var ul = document.createElement('ul');
+      C.FACES.forEach(function (f) {
+        var li = document.createElement('li');
+        var dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = 'rgb(' + realColors[f].join(',') + ')';
+        var tx = document.createElement('span'); tx.textContent = '= ' + C.COLOR_NAME[f];
+        li.appendChild(dot); li.appendChild(tx); ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    });
+  }
+
   function renderNet() {
     for (var i = 0; i < 54; i++) netCells[i].style.background = CSSVAR[state[i]] || CSSVAR['.'];
   }
@@ -195,12 +222,18 @@
   view = window.View3D.create($('view'));
   view.onTap(paint);
   refreshAll();
+  renderReal();
   setMode('edit');
 
   window.RubikApp = {
     getState: function () { return state.slice(); },
     setState: function (st) { state = st.slice(); history = []; clearResult(); refreshAll(); },
     view: view, toast: toast, setMode: setMode, clearResult: clearResult, ring: showRing,
+    setRealColors: function (m) {
+      realColors = m || null;
+      try { if (m) localStorage.setItem(REALKEY, JSON.stringify(m)); else localStorage.removeItem(REALKEY); } catch (e) { /* bỏ qua */ }
+      renderReal();
+    },
     goMove: function (m, ms) { return doMove(m, false, ms, true); },
     on: function (fn) { listeners.push(fn); }
   };

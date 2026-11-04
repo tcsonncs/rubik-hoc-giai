@@ -16,6 +16,15 @@
     U: { name: 'vàng', text: 'Xoay tiếp sang trái cho xanh lá ra trước, rồi ngả đỉnh khối về phía camera: tâm vàng hướng camera, mặt xanh dương nằm ở phía trên hình.' },
     D: { name: 'trắng', text: 'Đưa khối về tư thế đầu (xanh lá ở trước), rồi ngả đáy khối về phía camera: tâm trắng hướng camera, mặt xanh lá nằm ở phía trên hình.' }
   };
+  // khối màu lạ: không biết tên màu, gọi theo thứ tự quét
+  var STEPS_ODD = {
+    F: 'Cầm khối cho một mặt BẤT KỲ hướng về camera (mặt này là mặt 1), và một mặt khác ở phía trên. Giữ nguyên cách cầm này cho cả khối.',
+    R: 'Xoay khối sang trái một phần tư vòng: mặt mới hướng về camera, mặt trên vẫn ở phía trên.',
+    B: 'Xoay tiếp sang trái một phần tư vòng: mặt mới hướng về camera, mặt trên vẫn ở phía trên.',
+    L: 'Xoay tiếp sang trái một phần tư vòng: mặt mới hướng về camera, mặt trên vẫn ở phía trên.',
+    U: 'Xoay tiếp sang trái cho mặt 1 ra trước, rồi ngả đỉnh khối về phía camera: mặt trên hướng camera, mặt 3 nằm ở phía trên hình.',
+    D: 'Đưa khối về tư thế đầu (mặt 1 ở trước), rồi ngả đáy khối về phía camera: mặt dưới hướng camera, mặt 1 nằm ở phía trên hình.'
+  };
   var NAMES = { U: 'vàng', R: 'cam', F: 'xanh lá', D: 'trắng', L: 'đỏ', B: 'xanh dương' };
   var CSSCOL = { U: 'var(--U)', R: 'var(--R)', F: 'var(--F)', D: 'var(--D)', L: 'var(--L)', B: 'var(--B)' };
 
@@ -71,12 +80,14 @@
   function renderStep() {
     var f = ORDER[S.step];
     renderDots(); renderDone();
-    $('sTitle').textContent = 'Mặt ' + (S.step + 1) + '/6 · tâm ' + NAMES[f].toUpperCase();
-    $('sText').textContent = STEPS[f].text;
+    $('sTitle').textContent = S.odd ? 'Mặt ' + (S.step + 1) + '/6 (khối màu lạ)' : 'Mặt ' + (S.step + 1) + '/6 · tâm ' + NAMES[f].toUpperCase();
+    $('sText').textContent = S.odd ? STEPS_ODD[f] : STEPS[f].text;
+    $('sOdd').textContent = S.odd ? '🎨 Khối màu lạ: BẬT (bấm “Chụp ngay” cho từng mặt)' : '🎨 Khối màu lạ: tắt';
+    $('sOdd').disabled = S.step > 0;
     $('sBar').style.width = '0%';
     $('sRedo').disabled = S.step === 0;
     S.hist = []; S.cool = performance.now() + 900;
-    if (St.get().voice) L.speak('Mặt ' + (S.step + 1) + ' trên 6. ' + STEPS[f].text);
+    if (St.get().voice) L.speak('Mặt ' + (S.step + 1) + ' trên 6. ' + (S.odd ? STEPS_ODD[f] : STEPS[f].text));
   }
   function status(t) { $('sStatus').textContent = t; }
 
@@ -94,25 +105,33 @@
   function capture(rgb9) {
     if (!S) return;
     var f = ORDER[S.step];
+    if (S.odd) {
+      var lc = V.rgbToLab(rgb9[4]), dup = false;
+      ORDER.forEach(function (g) { if (S.samples[g] && V.dist(lc, V.rgbToLab(S.samples[g][4])) < 14) dup = true; });
+      if (dup) { status('Tâm mặt này gần giống màu tâm một mặt đã quét. Hãy đưa mặt khác vào khung (hoặc bấm “Chụp lại mặt trước”).'); return; }
+    }
     S.samples[f] = rgb9;
     beep();
     S.step++;
     if (S.step >= ORDER.length) { finish(); return; }
     renderStep();
-    status('Đã chụp mặt ' + NAMES[f] + '. Tiếp theo: mặt ' + NAMES[ORDER[S.step]] + '.');
+    status(S.odd ? 'Đã chụp mặt ' + S.step + '. Tiếp theo: mặt ' + (S.step + 1) + '.' : 'Đã chụp mặt ' + NAMES[f] + '. Tiếp theo: mặt ' + NAMES[ORDER[S.step]] + '.');
   }
 
   function finish() {
     var samples = S.samples;
     var res = V.readCube(samples);
+    var odd = !!S.odd, real = null;
+    if (odd) { real = {}; C.FACES.forEach(function (f) { real[f] = samples[f][4].map(Math.round); }); }
     stopScan(true);
+    A.setRealColors(real);
     A.setState(res.state);
     A.setMode('edit');
     A.ring(res.low);
     var note = res.notes.indexOf('rot') >= 0 ? ' App đã tự xoay lại một số mặt cho khớp.' : '';
     if (res.notes.indexOf('swap') >= 0) note += ' App đã đổi chỗ hai ô nghi ngờ cho khớp.';
     if (res.valid) {
-      A.toast('Đã đọc xong 6 mặt.' + note + (res.low.length ? ' Ô viền cam là ô chưa chắc: so với khối thật rồi chạm để sửa.' : ' So với khối thật rồi bấm “Hướng dẫn giải”.'));
+      A.toast((odd ? 'Khối màu lạ: xem bảng đổi màu (chấm màu thật = màu trong app). ' : '') + 'Đã đọc xong 6 mặt.' + note + (res.low.length ? ' Ô viền cam là ô chưa chắc: so với khối thật rồi chạm để sửa.' : ' So với khối thật rồi bấm “Hướng dẫn giải”.'));
     } else {
       A.toast('Đọc xong nhưng khối chưa hợp lệ.' + note + ' Xem chỗ báo lỗi bên dưới và chạm ô để sửa.');
       $('btnCheck').click();
@@ -127,6 +146,7 @@
     var cells = sampleVideo(v);
     if (!cells) return;
     var f = ORDER[S.step], now = performance.now();
+    if (S.odd) { status('Khối màu lạ: đưa mặt vào khung rồi bấm “📸 Chụp ngay”.'); $('sBar').style.width = '0%'; return; }
     var nom = V.nominal(cells[4]);
     if (now < S.cool) { $('sBar').style.width = '0%'; return; }
     if (nom === null) { status('Đưa khối vào giữa khung, cho tâm trùng ô giữa.'); S.hist = []; $('sBar').style.width = '0%'; return; }
@@ -160,7 +180,7 @@
   }
 
   async function startScan() {
-    S = { step: 0, samples: {}, stream: null, timer: null, hist: [], cool: 0, photo: null };
+    S = { step: 0, samples: {}, stream: null, timer: null, hist: [], cool: 0, photo: null, odd: false };
     A.setMode('scan');
     renderStep();
     status('Đang mở camera…');
@@ -270,8 +290,9 @@
   $('sRedo').addEventListener('click', function () {
     if (!S || S.step === 0) return;
     S.step--; delete S.samples[ORDER[S.step]];
-    renderStep(); status('Quét lại mặt tâm ' + NAMES[ORDER[S.step]] + '.');
+    renderStep(); status(S.odd ? 'Quét lại mặt ' + (S.step + 1) + '.' : 'Quét lại mặt tâm ' + NAMES[ORDER[S.step]] + '.');
   });
+  $('sOdd').addEventListener('click', function () { if (!S || S.step > 0) return; S.odd = !S.odd; renderStep(); status(S.odd ? 'Khối màu lạ: bật.' : 'Khối màu lạ: tắt.'); });
   $('sPick').addEventListener('click', function () { $('sFile').value = ''; $('sFile').click(); });
   $('sFile').addEventListener('change', function () {
     var f = $('sFile').files && $('sFile').files[0];
