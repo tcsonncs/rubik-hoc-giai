@@ -10,6 +10,15 @@
   var NORMAL = { U: [0, 1, 0], R: [1, 0, 0], F: [0, 0, 1], D: [0, -1, 0], L: [-1, 0, 0], B: [0, 0, -1] };
   var FACE_NAME = { U: 'mặt trên', R: 'mặt phải', F: 'mặt trước', D: 'mặt dưới', L: 'mặt trái', B: 'mặt sau' };
   var COLOR_NAME = { U: 'vàng', R: 'cam', F: 'xanh lá', D: 'trắng', L: 'đỏ', B: 'xanh dương' };
+  // Tên màu riêng của khối đang cầm (khối màu lạ). Mọi câu chữ trong app viết theo tên chuẩn; tr() đổi sang tên riêng khi hiện ra.
+  var customNames = null;
+  function setCustomNames(m) { customNames = m || null; }
+  function cname(f) { return (customNames && customNames[f]) || COLOR_NAME[f]; }
+  function tr(text) {
+    if (!customNames || typeof text !== 'string') return text;
+    var map = {}; FACES.forEach(function (f) { map[COLOR_NAME[f]] = cname(f); });
+    return text.replace(/xanh lá|xanh dương|trắng|vàng|cam|đỏ/g, function (w) { return map[w]; });
+  }
   var MOVES = [];
   FACES.forEach(function (f) { MOVES.push(f, f + "'", f + '2'); });
 
@@ -291,7 +300,7 @@
   }
 
   var API = {
-    FACES: FACES, MOVES: MOVES, NORMAL: NORMAL, FACE_NAME: FACE_NAME, COLOR_NAME: COLOR_NAME,
+    FACES: FACES, MOVES: MOVES, NORMAL: NORMAL, FACE_NAME: FACE_NAME, COLOR_NAME: COLOR_NAME, setCustomNames: setCustomNames, cname: cname, tr: tr,
     POS: POS, NRM: NRM, FACE_OF: FACE_OF, PERM: PERM, CORNERS: CORNERS, EDGES: EDGES,
     solved: solved, applyMove: applyMove, applyAlg: applyAlg, parseAlg: parseAlg,
     invertMove: invertMove, invertAlg: invertAlg, equal: equal, isSolved: isSolved,

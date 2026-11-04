@@ -130,18 +130,27 @@
 
   function finish() {
     var samples = S.samples;
-    var res = V.readCube(samples);
-    var odd = !!S.odd && !S.free, free = !!S.free, real = null;
+    var res;
+    try { res = V.readCube(samples); }
+    catch (err) {
+      // đọc lỗi (màu quá giống nhau...): vẫn sang màn tô màu với khối đã xếp sẵn để Thầy tự tô
+      res = { state: C.solved(), low: [], notes: [], valid: true, failed: true };
+      try { console.warn('readCube', err); } catch (e0) { /* bỏ qua */ }
+    }
+    var odd = !!S.odd, free = !!S.free, real = null;
     if (odd) { real = {}; C.FACES.forEach(function (f) { real[f] = samples[f][4].map(Math.round); }); }
     stopScan(true);
     A.setRealColors(real);
+    A.setCenterEdit(free);
     A.setState(res.state);
     A.setMode('edit');
     A.ring(res.low);
     var note = res.notes.indexOf('rot') >= 0 ? ' App đã tự xoay lại một số mặt cho khớp.' : '';
     if (res.notes.indexOf('swap') >= 0) note += ' App đã đổi chỗ hai ô nghi ngờ cho khớp.';
-    if (res.valid) {
-      A.toast((odd ? 'Khối màu lạ: xem bảng đổi màu (chấm màu thật = màu trong app). ' : free ? 'Chỉ chụp: hãy tự sửa màu cho giống khối thật. ' : '') + 'Đã đọc xong 6 mặt.' + note + (res.low.length ? ' Ô viền cam là ô chưa chắc: so với khối thật rồi chạm để sửa.' : ' So với khối thật rồi bấm “Hướng dẫn giải”.'));
+    if (res.failed) {
+      A.toast('App chưa đọc được màu từ ảnh. Khối đang hiện ở dạng đã xếp: hãy chọn màu rồi chạm từng ô để tô lại cho giống khối thật.');
+    } else if (res.valid) {
+      A.toast((odd ? 'App đã dùng đúng 6 màu của khối này (chỉnh tên/màu ở mục “Màu của khối này”). ' + (free ? 'Hãy tự sửa các ô sai, sửa được cả ô tâm có chấm •. ' : '') : '') + 'Đã đọc xong 6 mặt.' + note + (res.low.length ? ' Ô viền cam là ô chưa chắc: so với khối thật rồi chạm để sửa.' : ' So với khối thật rồi bấm “Hướng dẫn giải”.'));
     } else {
       A.toast('Đọc xong nhưng khối chưa hợp lệ.' + note + ' Xem chỗ báo lỗi bên dưới và chạm ô để sửa.');
       $('btnCheck').click();

@@ -84,31 +84,111 @@
   }
   buildPalette();
 
-  // ---- khối màu lạ: nhớ màu thật của 6 tâm để đổi sang màu trong app ----
-  var REALKEY = 'rubik-realcolors', realColors = null;
-  try { realColors = JSON.parse(localStorage.getItem(REALKEY) || 'null'); } catch (e) { realColors = null; }
-  function renderReal() {
+  // ---- màu riêng của khối: app dùng đúng 6 màu và tên của khối đang cầm ----
+  var REALKEY = 'rubik-realcolors', NAMEKEY = 'rubik-realnames', realColors = null, realNames = null;
+  try { realColors = JSON.parse(localStorage.getItem(REALKEY) || 'null'); realNames = JSON.parse(localStorage.getItem(NAMEKEY) || 'null'); } catch (e) { realColors = null; realNames = null; }
+  function toHex(rgb) { return '#' + rgb.map(function (v) { v = Math.max(0, Math.min(255, Math.round(v))); return (v < 16 ? '0' : '') + v.toString(16); }).join(''); }
+  function fromHex(h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
+  // đoán tên tiếng Việt của một màu
+  function guessName(rgb) {
+    var r = rgb[0] / 255, g = rgb[1] / 255, b = rgb[2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    var sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1)), h = 0;
+    if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360; }
+    if (l < 0.16) return 'đen';
+    if (sat < 0.2) return l > 0.78 ? 'trắng' : l > 0.45 ? 'bạc' : 'xám';
+    if (h < 15 || h >= 345) return l < 0.3 ? 'nâu' : 'đỏ';
+    if (h < 40) return l < 0.42 ? 'nâu' : 'cam';
+    if (h < 70) return 'vàng';
+    if (h < 165) return 'xanh lá';
+    if (h < 200) return l > 0.58 ? 'xanh nhạt' : 'xanh ngọc';
+    if (h < 250) return l > 0.58 ? 'xanh nhạt' : l < 0.3 ? 'xanh đậm' : 'xanh dương';
+    if (h < 290) return 'tím';
+    return 'hồng';
+  }
+  function autoNames(m) {
+    var out = {}, used = {};
+    C.FACES.forEach(function (f) {
+      var n = guessName(m[f]), k = 2, base = n;
+      while (used[n]) { n = base + ' ' + k; k++; }
+      used[n] = 1; out[f] = n;
+    });
+    return out;
+  }
+  function saveReal() {
+    try {
+      if (realColors) { localStorage.setItem(REALKEY, JSON.stringify(realColors)); localStorage.setItem(NAMEKEY, JSON.stringify(realNames)); }
+      else { localStorage.removeItem(REALKEY); localStorage.removeItem(NAMEKEY); }
+    } catch (e) { /* bỏ qua */ }
+  }
+  var DEFHEX = { U: '#ffd500', R: '#ff6a00', F: '#00a651', D: '#f4f4f4', L: '#d7263d', B: '#1f5fd6' };
+  var TRKEEP = null;
+  function translateStatic() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-tr]'), function (el) {
+      if (el.dataset.orig === undefined) el.dataset.orig = el.innerHTML;
+      el.innerHTML = C.tr(el.dataset.orig);
+    });
+  }
+  function applyColors() {
+    var root = document.documentElement.style;
+    C.FACES.forEach(function (f) {
+      if (realColors) root.setProperty('--' + f, 'rgb(' + realColors[f].map(Math.round).join(',') + ')'); else root.removeProperty('--' + f);
+      window.View3D.COLORS[f] = parseInt((realColors ? toHex(realColors[f]) : DEFHEX[f]).slice(1), 16);
+    });
+    C.setCustomNames(realColors ? realNames : null);
     Array.prototype.forEach.call($('palette').children, function (b) {
-      var sw = b.querySelector('.sw'); if (!sw) return;
-      var old = sw.querySelector('.real'); if (old) sw.removeChild(old);
-      var k = b.dataset.k;
-      if (realColors && k && realColors[k]) { var d = document.createElement('i'); d.className = 'real'; d.style.background = 'rgb(' + realColors[k].join(',') + ')'; sw.appendChild(d); }
+      var k = b.dataset.k; if (!k) return;
+      var nm = b.children[1]; if (nm) { var t = C.cname(k); nm.textContent = t.charAt(0).toUpperCase() + t.slice(1); }
     });
-    ['realMap', 'gRealMap'].forEach(function (id) {
-      var box = $(id); if (!box) return;
-      box.innerHTML = '';
-      box.hidden = !realColors;
-      if (!realColors) return;
-      var b = document.createElement('b'); b.textContent = 'Khối màu lạ: chấm màu thật của khối = màu trong app'; box.appendChild(b);
-      var ul = document.createElement('ul');
-      C.FACES.forEach(function (f) {
-        var li = document.createElement('li');
-        var dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = 'rgb(' + realColors[f].join(',') + ')';
-        var tx = document.createElement('span'); tx.textContent = '= ' + C.COLOR_NAME[f];
-        li.appendChild(dot); li.appendChild(tx); ul.appendChild(li);
-      });
-      box.appendChild(ul);
+    translateStatic();
+    renderReal();
+    if (view) view.setState(state);
+    renderNet();
+  }
+  function renderReal() {
+    var box = $('realMap'), g = $('gRealMap');
+    if (g) {
+      g.innerHTML = ''; g.hidden = !realColors;
+      if (realColors) {
+        var b0 = document.createElement('b'); b0.textContent = 'Màu của khối này'; g.appendChild(b0);
+        var ul0 = document.createElement('ul');
+        C.FACES.forEach(function (f) {
+          var li = document.createElement('li');
+          var dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = 'rgb(' + realColors[f].map(Math.round).join(',') + ')';
+          var tx = document.createElement('span'); tx.textContent = C.cname(f) + ' (' + C.FACE_NAME[f] + ')';
+          li.appendChild(dot); li.appendChild(tx); ul0.appendChild(li);
+        });
+        g.appendChild(ul0);
+      }
+    }
+    if (!box) return;
+    var wasOpen = box.open;
+    box.innerHTML = '';
+    var sm = document.createElement('summary'); sm.textContent = realColors ? '🎨 Màu của khối này (đang dùng màu riêng)' : '🎨 Chỉnh màu cho đúng khối của em'; box.appendChild(sm);
+    var hint = document.createElement('p'); hint.className = 'hint small';
+    hint.textContent = 'Mỗi dòng là một màu của khối thật. Chạm ô màu để chọn lại màu, gõ tên màu theo cách em gọi. Mọi chỗ trong app sẽ dùng đúng màu và tên này.';
+    box.appendChild(hint);
+    var ul = document.createElement('ul'); ul.className = 'edlist';
+    C.FACES.forEach(function (f) {
+      var li = document.createElement('li');
+      var pick = document.createElement('input'); pick.type = 'color'; pick.value = realColors ? toHex(realColors[f]) : DEFHEX[f];
+      pick.setAttribute('aria-label', 'Màu của ' + C.FACE_NAME[f]);
+      var nm = document.createElement('input'); nm.type = 'text'; nm.maxLength = 14; nm.value = C.cname(f);
+      nm.setAttribute('aria-label', 'Tên màu của ' + C.FACE_NAME[f]);
+      var lb = document.createElement('small'); lb.textContent = C.FACE_NAME[f] + (f === 'D' ? ' (đặt ở dưới)' : f === 'F' ? ' (đặt ở trước)' : '');
+      function commit() {
+        if (!realColors) { realColors = {}; realNames = {}; C.FACES.forEach(function (g2) { realColors[g2] = fromHex(DEFHEX[g2]); realNames[g2] = C.COLOR_NAME[g2]; }); }
+        realColors[f] = fromHex(pick.value);
+        var n = nm.value.trim(); if (n) realNames[f] = n.toLowerCase();
+        saveReal(); applyColors(); $('realMap').open = true;
+      }
+      pick.addEventListener('change', commit); nm.addEventListener('change', commit);
+      li.appendChild(pick); li.appendChild(nm); li.appendChild(lb); ul.appendChild(li);
     });
+    box.appendChild(ul);
+    var rs = document.createElement('button'); rs.type = 'button'; rs.className = 'ghost'; rs.textContent = '↺ Về màu chuẩn (trắng, vàng, xanh, đỏ…)';
+    rs.addEventListener('click', function () { realColors = null; realNames = null; saveReal(); applyColors(); });
+    box.appendChild(rs);
+    box.open = wasOpen;
   }
 
   function renderNet() {
@@ -128,10 +208,11 @@
   }
 
   // ---- tô màu ----
+  var centerEdit = false;   // sau “Chỉ chụp, tôi tự sửa”: cho sửa cả ô tâm vì app có thể đọc sai tâm
   function paint(i) {
     if (view && view.isBusy()) return;
     if (!brush) { toast('Đang ở chế độ “Chỉ xem”. Chọn một màu ở bảng màu để tô.'); return; }
-    if (i % 9 === 4) { toast('Ô tâm không đổi được: tâm của khối thật luôn đứng yên.'); return; }
+    if (i % 9 === 4 && !centerEdit) { toast('Ô tâm không đổi được: tâm của khối thật luôn đứng yên.'); return; }
     if (state[i] === brush) return;
     state = state.slice(); state[i] = brush;
     history = [];
@@ -207,7 +288,7 @@
     v.problems.forEach(function (pr) {
       var b = document.createElement('button');
       b.type = 'button'; b.className = 'bad';
-      b.textContent = pr.text;
+      b.textContent = C.tr(pr.text);
       if (pr.cells.length) {
         var s = document.createElement('small'); s.textContent = '👆 Chạm để xem ô nghi ngờ'; b.appendChild(s);
         b.addEventListener('click', function () { showRing(pr.cells); });
@@ -222,17 +303,17 @@
   view = window.View3D.create($('view'));
   view.onTap(paint);
   refreshAll();
-  renderReal();
+  applyColors();
   setMode('edit');
 
   window.RubikApp = {
     getState: function () { return state.slice(); },
     setState: function (st) { state = st.slice(); history = []; clearResult(); refreshAll(); },
     view: view, toast: toast, setMode: setMode, clearResult: clearResult, ring: showRing,
+    setCenterEdit: function (on) { centerEdit = !!on; },
     setRealColors: function (m) {
-      realColors = m || null;
-      try { if (m) localStorage.setItem(REALKEY, JSON.stringify(m)); else localStorage.removeItem(REALKEY); } catch (e) { /* bỏ qua */ }
-      renderReal();
+      realColors = m || null; realNames = m ? autoNames(m) : null;
+      saveReal(); applyColors();
     },
     goMove: function (m, ms) { return doMove(m, false, ms, true); },
     on: function (fn) { listeners.push(fn); }

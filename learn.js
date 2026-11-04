@@ -3,6 +3,7 @@
   'use strict';
   var A = window.RubikApp, C = window.Cube, S = window.Solver, L = window.Lessons, St = window.Store;
   var view = A.view;
+  var T = function (t) { return C.tr(t); };
   var $ = function (id) { return document.getElementById(id); };
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
   function fmt(ms) {
@@ -70,22 +71,22 @@
     renderProgress(it.si);
     $('btnWhy').hidden = false;
     $('gNext').textContent = 'Tiếp ▶'; $('gNext').disabled = false; $('gAuto').disabled = false;
-    $('gStage').textContent = 'Giai đoạn ' + sg.id + '/7 · ' + sg.name;
-    $('gGoal').textContent = (it.ti === 0 && it.mi === 0 ? sg.intro + ' ' : '') + 'Đích: ' + sg.goal;
+    $('gStage').textContent = T('Giai đoạn ' + sg.id + '/7 · ' + sg.name);
+    $('gGoal').textContent = T((it.ti === 0 && it.mi === 0 ? sg.intro + ' ' : '') + 'Đích: ' + sg.goal);
     var bm = $('gMove');
     bm.innerHTML = '';
     bm.appendChild(el('span', 'sym ' + d.kind, d.sym));
-    bm.appendChild(el('span', 'dsc', d.text));
-    $('gText').textContent = sp.text.replace(/'/g, '′') + '  (bước ' + (it.ti + 1) + '/' + sg.steps.length + ')';
+    bm.appendChild(el('span', 'dsc', T(d.text)));
+    $('gText').textContent = T(sp.text).replace(/'/g, '′') + '  (bước ' + (it.ti + 1) + '/' + sg.steps.length + ')';
     var seq = $('gSeq');
     seq.innerHTML = '';
     sp.moves.forEach(function (m, k) { seq.appendChild(el('span', k < it.mi ? 'done' : k === it.mi ? 'cur' : '', m.replace("'", '′'))); });
-    $('gWhy').textContent = sp.why;
+    $('gWhy').textContent = T(sp.why);
     var face = it.move[0], tk = ++G.token;
     view.highlight(L.layerCells(face), 'guide');
     view.showFace(face, opt.anim ? 380 : 0).then(function () { if (G && tk === G.token) view.showArrow(it.move); });
     view.showArrow(it.move);
-    if (opt.voice && speak) L.speak((it.mi === 0 ? sp.text + ' ' : '') + d.speak);
+    if (opt.voice && speak) L.speak(T((it.mi === 0 ? sp.text + ' ' : '') + d.speak));
   }
 
   function stepGuide(dir) {
@@ -143,7 +144,7 @@
     S.STAGES.forEach(function (sg) {
       var n = opt.stars[sg.id] || 0;
       var li = el('li', n ? 'got' : '');
-      li.appendChild(el('span', 'nm', sg.id + '. ' + sg.name));
+      li.appendChild(el('span', 'nm', T(sg.id + '. ' + sg.name)));
       li.appendChild(el('span', 'st', '★'.repeat(n) + '☆'.repeat(3 - n)));
       ul.appendChild(li);
     });
@@ -178,7 +179,7 @@
   });
   function showPracticeInfo() {
     var k = S.currentStage(A.getState());
-    $('pInfo').textContent = k > 7 ? 'Khối đã giải xong!' : 'Đang làm: giai đoạn ' + k + ' · ' + S.STAGES[k - 1].name + '. ' + S.STAGES[k - 1].goal;
+    $('pInfo').textContent = k > 7 ? 'Khối đã giải xong!' : T('Đang làm: giai đoạn ' + k + ' · ' + S.STAGES[k - 1].name + '. ' + S.STAGES[k - 1].goal);
   }
   $('pHint').addEventListener('click', function () {
     if (!P || !P.running) { A.toast('Hãy bấm “Đảo và bắt đầu” trước.'); return; }
@@ -190,7 +191,7 @@
     P.hints[k] = (P.hints[k] || 0) + 1;
     var box = $('pHintBox');
     box.hidden = false;
-    box.textContent = '💡 ' + sp.text.replace(/'/g, '′') + '  Nước đầu tiên: ' + L.movesLabel([sp.moves[0]]) + '.';
+    box.textContent = '💡 ' + T(sp.text).replace(/'/g, '′') + '  Nước đầu tiên: ' + L.movesLabel([sp.moves[0]]) + '.';
     var face = sp.moves[0][0];
     view.highlight(L.layerCells(face), 'guide');
     view.showFace(face, 380);
@@ -205,7 +206,7 @@
       P.awarded[k] = true;
       var h = P.hints[k] || 0, n = h === 0 ? 3 : h <= 2 ? 2 : 1;
       St.giveStars(k, n);
-      if (k < 7) A.toast('Xong giai đoạn ' + k + ' (' + S.STAGES[k - 1].name + '): ' + '★'.repeat(n));
+      if (k < 7) A.toast(T('Xong giai đoạn ' + k + ' (' + S.STAGES[k - 1].name + '): ') + '★'.repeat(n));
     }
     if (done > P.maxDone) P.maxDone = done;
     opt = St.get(); renderStars();
@@ -251,7 +252,7 @@
     var ok = key === Q.shape, sh = L.SHAPES[Q.shape];
     St.recordQuiz(ok);
     var r = $('qRes'); r.innerHTML = '';
-    var box = el('div', ok ? 'ok' : 'bad2', (ok ? '✔ Đúng rồi! ' : '✘ Chưa đúng. Đây là: ' + sh.name + '. ') + sh.how + ' ' + sh.todo);
+    var box = el('div', ok ? 'ok' : 'bad2', T((ok ? '✔ Đúng rồi! ' : '✘ Chưa đúng. Đây là: ' + sh.name + '. ') + sh.how + ' ' + sh.todo));
     r.appendChild(box);
     Array.prototype.forEach.call($('qOpts').children, function (b) { b.disabled = true; });
     $('qNext').hidden = false;

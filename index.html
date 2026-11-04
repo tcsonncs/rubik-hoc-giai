@@ -26,7 +26,7 @@
       <button id="btnFront" type="button">Mặt trước</button>
       <button id="btnBottom" type="button">Xem mặt dưới</button>
     </div>
-    <p class="hint">Kéo để xoay khối. Tư thế chuẩn: <b>tâm trắng ở dưới</b>, <b>xanh lá ở trước</b>.</p>
+    <p class="hint" data-tr>Kéo để xoay khối. Tư thế chuẩn: <b>tâm trắng ở dưới</b>, <b>xanh lá ở trước</b>.</p>
   </section>
 
   <!-- ===== Hướng dẫn giải ===== -->
@@ -72,8 +72,8 @@
 
   <!-- ===== Đố nhanh ===== -->
   <section id="cardQuiz" class="card" aria-label="Đố nhanh" data-modes="quiz">
-    <h2>Đố nhanh: mặt vàng đang là hình gì?</h2>
-    <p class="hint small">Chỉ nhìn bốn <b>cạnh</b> vàng (ô giữa mỗi bên). Các góc xám là chưa cần quan tâm.</p>
+    <h2 data-tr>Đố nhanh: mặt vàng đang là hình gì?</h2>
+    <p class="hint small" data-tr>Chỉ nhìn bốn <b>cạnh</b> vàng (ô giữa mỗi bên). Các góc xám là chưa cần quan tâm.</p>
     <div id="qGrid" class="qgrid" aria-label="Mặt vàng nhìn từ trên xuống"></div>
     <div id="qOpts" class="qopts"></div>
     <div id="qRes" class="result" role="status" aria-live="polite"></div>
@@ -131,7 +131,7 @@
   <section class="card" aria-label="Tô màu" data-modes="edit">
     <h2>Tô màu từng ô</h2>
     <div id="palette" class="palette" role="radiogroup" aria-label="Chọn màu"></div>
-    <div id="realMap" class="realmap" hidden></div>
+    <details id="realMap" class="realmap"></details>
     <p class="hint small">Chọn một màu rồi chạm ô trên khối hoặc trên hình trải ra. Ô tâm không đổi được. Chọn “Chỉ xem” để không tô nhầm.</p>
     <div id="net" class="net" aria-label="Hình trải ra của khối"></div>
   </section>
