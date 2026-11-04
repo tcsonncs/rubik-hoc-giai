@@ -17,7 +17,9 @@
   --bad: #ff9c94; --badbg: #3a1f1d; --good: #7fdc9b; --goodbg: #17301f;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; overflow-x: hidden; }
+html, body { margin: 0; }
+html { overflow-x: hidden; }
+body { overflow-x: clip; }
 body {
   background: var(--bg); color: var(--text);
   font: 18px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -79,3 +81,61 @@ button.icon { width: 48px; font-size: 22px; padding: 0; }
   opacity: 0; pointer-events: none; transition: opacity .2s;
 }
 .toast.on { opacity: 1; }
+
+/* ===== giai đoạn 3: hướng dẫn, luyện tập, đố nhanh ===== */
+[hidden] { display: none !important; }
+button:disabled { opacity: .45; cursor: default; }
+button.ghost { background: transparent; border-color: var(--line); width: 100%; margin-top: 8px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.row2 button { font-size: 15px; padding: 4px; }
+.card > button.primary + .row2 { margin-top: 10px; }
+.prog { display: flex; gap: 6px; list-style: none; margin: 0 0 8px; padding: 0; justify-content: space-between; }
+.prog li { flex: 1; text-align: center; padding: 6px 0; border-radius: 10px; background: var(--btn); color: var(--muted); font-weight: 700; font-size: 16px; }
+.prog li.done { background: var(--goodbg); color: var(--good); }
+.prog li.skip { opacity: .5; }
+.prog li.now { background: var(--accent); color: var(--accent-text); }
+#cardGuide h2 { margin-bottom: 2px; }
+.bigmove { display: flex; align-items: center; gap: 12px; margin: 8px 0; padding: 10px 12px; border-radius: 14px; background: var(--btn); }
+.bigmove .sym { font-size: 30px; font-weight: 800; min-width: 84px; text-align: center; color: var(--accent); }
+.bigmove .dsc { font-size: 16px; line-height: 1.35; }
+.steptext { margin: 6px 0; font-size: 18px; }
+.seq { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.seq span { padding: 4px 9px; border-radius: 9px; background: var(--btn); font-weight: 700; font-size: 17px; }
+.seq span.done { opacity: .4; }
+.seq span.cur { background: var(--accent); color: var(--accent-text); }
+.why { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--btn); font-size: 16px; }
+.ctrl { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 8px; margin-top: 12px; }
+.ctrl button { min-height: 56px; font-size: 17px; padding: 4px; }
+.ctrl .primary { width: auto; }
+.timer { font-size: 44px; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; margin: 4px 0; }
+.stars { list-style: none; margin: 10px 0 0; padding: 0; }
+.stars li { display: flex; justify-content: space-between; padding: 6px 2px; border-bottom: 1px solid var(--line); font-size: 16px; }
+.stars li .st { letter-spacing: 2px; color: var(--muted); }
+.stars li.got .st { color: #e0a800; }
+.qgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 180px; margin: 10px auto; }
+.qc { aspect-ratio: 1 / 1; border-radius: 10px; border: 2px solid rgba(0,0,0,.35); }
+.qc.y { background: var(--U); }
+.qc.g { background: #5b6370; }
+.qopts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.qopts button { min-height: 56px; font-size: 18px; }
+.result .bad2 { padding: 12px; border-radius: 12px; background: var(--badbg); color: var(--bad); font-weight: 600; }
+#cardGuide ~ .card button, .stage ~ .card button { }
+body[data-mode="guide"] .view { max-height: 40vh; }
+body[data-mode="guide"] .viewbtns, body[data-mode="guide"] .stage .hint { display: none; }
+body[data-mode="guide"] .view { max-height: 34vh; }
+body[data-mode="guide"] .ctrl { position: sticky; bottom: 0; background: var(--card); padding: 8px 0 4px; z-index: 2; }
+body[data-mode="guide"] .bigmove .sym { font-size: 26px; min-width: 76px; }
+
+/* ===== giai đoạn 4: quét bằng camera ===== */
+.scanbox { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1 / 1; margin: 6px auto; background: #000; border-radius: 16px; overflow: hidden; }
+.scanbox video, .scanbox canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.scangrid { position: absolute; inset: 11%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); pointer-events: none; }
+.scangrid i { border: 2px solid rgba(255,255,255,.85); box-shadow: 0 0 0 1px rgba(0,0,0,.5) inset; }
+.scanbox.photo .scangrid { display: none; }
+#sOver { touch-action: none; }
+.bar { height: 10px; border-radius: 6px; background: var(--btn); overflow: hidden; margin: 6px 0; }
+.bar > div { height: 100%; width: 0; background: var(--accent); transition: width .1s linear; }
+.sdone { display: flex; gap: 6px; justify-content: center; margin: 6px 0; }
+.sdone .mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; width: 38px; height: 38px; border: 2px solid transparent; border-radius: 4px; }
+.sdone .mini.empty { opacity: .25; }
+.sdone .mini i { display: block; }

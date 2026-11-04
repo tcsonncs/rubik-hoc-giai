@@ -1,4 +1,5 @@
-/* app.js - giao diện giai đoạn 1: nhập màu 54 ô, quay 18 nước, kiểm tra khối. Dữ liệu chỉ ở localStorage. */
+/* app.js - giao diện: nhập màu 54 ô, quay 18 nước, kiểm tra khối. Dữ liệu chỉ ở localStorage.
+   Màn hướng dẫn, luyện tập, đố nhanh nằm ở learn.js, nói chuyện với app qua window.RubikApp. */
 (function () {
   'use strict';
   var C = window.Cube;
@@ -9,7 +10,7 @@
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* bỏ qua */ } }
 
-  var state = C.solved(), history = [], brush = null, view = null, netCells = [], toastTimer = null;
+  var state = C.solved(), history = [], brush = null, view = null, netCells = [], toastTimer = null, listeners = [];
 
   // đọc lại khối đã lưu
   (function () {
@@ -124,14 +125,26 @@
     });
   })();
 
-  function doMove(m, record, ms) {
+  function doMove(m, record, ms, silent) {
     clearResult();
     var next = C.applyMove(state, m);
     state = next;
     if (record) history.push(m);
     lsSet(STORE, JSON.stringify(state));
     renderNet(); refreshPalette();
-    return view.animate(m, ms === undefined ? 260 : ms, next);
+    var p = view.animate(m, ms === undefined ? 260 : ms, next);
+    if (!silent) listeners.forEach(function (fn) { fn(m); });
+    return p;
+  }
+
+  // ---- các màn: edit (tô màu), guide (hướng dẫn), practice (luyện tập), quiz (đố nhanh) ----
+  function setMode(mode) {
+    document.body.dataset.mode = mode;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-modes]'), function (el) {
+      el.hidden = el.dataset.modes.split(',').indexOf(mode) < 0;
+    });
+    if (view) { view.clearArrow(); if (mode !== 'edit') showRing([]); requestAnimationFrame(function () { view.resize(); }); }
+    window.scrollTo(0, 0);
   }
 
   $('btnUndo').addEventListener('click', function () {
@@ -182,6 +195,15 @@
   view = window.View3D.create($('view'));
   view.onTap(paint);
   refreshAll();
+  setMode('edit');
+
+  window.RubikApp = {
+    getState: function () { return state.slice(); },
+    setState: function (st) { state = st.slice(); history = []; clearResult(); refreshAll(); },
+    view: view, toast: toast, setMode: setMode, clearResult: clearResult, ring: showRing,
+    goMove: function (m, ms) { return doMove(m, false, ms, true); },
+    on: function (fn) { listeners.push(fn); }
+  };
 
   // cho phép thử tự động
   window.__rubik = { get state() { return state; }, view: view, paint: paint, doMove: doMove, setBrush: function (b) { brush = b; refreshPalette(); } };
