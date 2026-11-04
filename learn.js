@@ -128,7 +128,7 @@
   }
   $('gVoice').addEventListener('click', function () {
     St.setOpt('voice', !opt.voice); opt = St.get(); refreshToggles();
-    if (opt.voice) { if (!L.speak('Đã bật đọc to.')) { A.toast('Máy này chưa có giọng đọc.'); St.setOpt('voice', false); opt = St.get(); refreshToggles(); } }
+    if (opt.voice) { if (!L.speak('Đã bật đọc to.')) { A.toast('Máy này chưa có giọng tiếng Việt, nên không đọc to (tránh đọc nhầm tiếng Anh). iPhone và trình duyệt Edge thường có sẵn.'); St.setOpt('voice', false); opt = St.get(); refreshToggles(); } }
     else L.stopSpeak();
   });
   $('gAnim').addEventListener('click', function () { St.setOpt('anim', !opt.anim); opt = St.get(); refreshToggles(); });

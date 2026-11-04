@@ -79,6 +79,7 @@
   function speak(text) {
     if (!root.speechSynthesis || !root.SpeechSynthesisUtterance) return false;
     root.speechSynthesis.cancel();
+    if (!pickVoice() && !/^(iPhone|iPad|iPod)/.test((root.navigator && root.navigator.platform) || '')) return false;
     var u = new root.SpeechSynthesisUtterance(text.replace(/[′’']/g, ' phẩy ').replace(/[↻↺]/g, ''));
     u.lang = 'vi-VN';
     var v = pickVoice(); if (v) u.voice = v;

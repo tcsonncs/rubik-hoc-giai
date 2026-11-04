@@ -169,3 +169,5 @@ body[data-mode="guide"] .bigmove .sym { font-size: 26px; min-width: 76px; }
 .realmap li { display: flex; align-items: center; gap: 6px; }
 .realmap .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(0,0,0,.4); flex: none; }
 .palette .sw .real { display: block; width: 14px; height: 14px; margin: 5px; border-radius: 50%; border: 2px solid rgba(255,255,255,.9); box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
+
+#sOdd { border-color: var(--accent); }

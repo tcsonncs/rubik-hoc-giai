@@ -149,8 +149,18 @@
     if (S.odd) { status('Khối màu lạ: đưa mặt vào khung rồi bấm “📸 Chụp ngay”.'); $('sBar').style.width = '0%'; return; }
     var nom = V.nominal(cells[4]);
     if (now < S.cool) { $('sBar').style.width = '0%'; return; }
-    if (nom === null) { status('Đưa khối vào giữa khung, cho tâm trùng ô giữa.'); S.hist = []; $('sBar').style.width = '0%'; return; }
-    if (nom !== f) { status('Đang thấy mặt tâm ' + NAMES[nom] + '. Cần mặt tâm ' + NAMES[f] + '.'); S.hist = []; $('sBar').style.width = '0%'; return; }
+    if (nom !== f) {
+      // mặt đầu mãi không khớp màu chuẩn: gần như chắc chắn là khối màu lạ, tự bật chế độ riêng
+      if (!S.mis) S.mis = now;
+      if (S.step === 0 && now - S.mis > 3500) {
+        S.odd = true; S.mis = 0; renderStep();
+        status('Có vẻ đây là khối màu lạ nên app đã tự bật chế độ “Khối màu lạ”. Đưa một mặt bất kỳ vào khung rồi bấm “📸 Chụp ngay”.');
+        return;
+      }
+      status(nom === null ? 'Đưa khối vào giữa khung, cho tâm trùng ô giữa. (Khối màu lạ? Chờ vài giây app tự chuyển.)' : 'Đang thấy mặt tâm ' + NAMES[nom] + '. Cần mặt tâm ' + NAMES[f] + '. (Khối màu lạ? Chờ vài giây app tự chuyển.)');
+      S.hist = []; $('sBar').style.width = '0%'; return;
+    }
+    S.mis = 0;
     var labs = cells.map(V.rgbToLab);
     S.hist.push({ t: now, labs: labs, rgb: cells });
     while (S.hist.length && now - S.hist[0].t > 1000) S.hist.shift();
